@@ -34,10 +34,20 @@ namespace OpenAI
 		public string FinishReason { get; set; }
 
 		/// <summary>
+		/// Holds the answer of the AI assistant
+		/// </summary>
+		[JsonProperty("message")]
+		public chatMsg ChatMessage { get; set; }
+
+		/// <summary>
 		/// Gets the main text of this completion
 		/// </summary>
 		public override string ToString()
 		{
+			if (!string.IsNullOrWhiteSpace(Text))
+				return Text;
+			if (ChatMessage!=null)
+				return ChatMessage.content.Trim();
 			return Text;
 		}
 	}

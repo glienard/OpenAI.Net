@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30309.148
+# Visual Studio Version 17
+VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenAI.Net", "src\OpenAI.Net.csproj", "{99C80D3E-3F0F-4ACC-900D-7AAE6230A780}"
 EndProject
@@ -27,7 +27,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MoodToColor", "samples\Mood
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NotesToSummary", "samples\NotesToSummary\NotesToSummary.csproj", "{D4421B02-1D92-46AB-A657-B287402CF2B9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SQLTranslate", "samples\SQLTranslate\SQLTranslate.csproj", "{3B8D41D4-32A7-4868-8BD0-4A4B6BA0E901}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SQLTranslate", "samples\SQLTranslate\SQLTranslate.csproj", "{3B8D41D4-32A7-4868-8BD0-4A4B6BA0E901}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatCompletions", "ChatCompletions\ChatCompletions.csproj", "{1F5A747C-9A82-48A4-ABB9-393C5B743796}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engines", "Engines\Engines.csproj", "{D2EAF4D6-3B9F-4CF0-9F15-943FF83680A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -79,6 +83,14 @@ Global
 		{3B8D41D4-32A7-4868-8BD0-4A4B6BA0E901}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B8D41D4-32A7-4868-8BD0-4A4B6BA0E901}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B8D41D4-32A7-4868-8BD0-4A4B6BA0E901}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F5A747C-9A82-48A4-ABB9-393C5B743796}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F5A747C-9A82-48A4-ABB9-393C5B743796}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F5A747C-9A82-48A4-ABB9-393C5B743796}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F5A747C-9A82-48A4-ABB9-393C5B743796}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D2EAF4D6-3B9F-4CF0-9F15-943FF83680A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D2EAF4D6-3B9F-4CF0-9F15-943FF83680A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D2EAF4D6-3B9F-4CF0-9F15-943FF83680A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D2EAF4D6-3B9F-4CF0-9F15-943FF83680A3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -94,6 +106,8 @@ Global
 		{1BF21B0F-FAB1-48AF-8E6E-B35766A609C2} = {8658CEB9-ED27-4D60-BF79-BAE2DA6BB995}
 		{D4421B02-1D92-46AB-A657-B287402CF2B9} = {8658CEB9-ED27-4D60-BF79-BAE2DA6BB995}
 		{3B8D41D4-32A7-4868-8BD0-4A4B6BA0E901} = {8658CEB9-ED27-4D60-BF79-BAE2DA6BB995}
+		{1F5A747C-9A82-48A4-ABB9-393C5B743796} = {8658CEB9-ED27-4D60-BF79-BAE2DA6BB995}
+		{D2EAF4D6-3B9F-4CF0-9F15-943FF83680A3} = {8658CEB9-ED27-4D60-BF79-BAE2DA6BB995}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {971477B1-6BBA-40CD-8B76-AEBC01D99130}

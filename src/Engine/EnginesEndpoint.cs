@@ -50,7 +50,7 @@ namespace OpenAI
 		{
 			var client = new HttpClient();
 			client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", auth.ThisOrDefault().ApiKey);
-			client.DefaultRequestHeaders.Add("User-Agent", "williamwelsh/openai-dotnet");
+			client.DefaultRequestHeaders.Add("User-Agent", "glienard/openai-dotnet");
 
 			var response = await client.GetAsync("https://api.openai.com/v1/engines");
             var resultAsString = await response.Content.ReadAsStringAsync();
@@ -74,12 +74,12 @@ namespace OpenAI
 		{
 			if (auth.ThisOrDefault()?.ApiKey is null)
 			{
-				throw new AuthenticationException("You must provide API authentication.  Please refer to https://github.com/WilliamWelsh/OpenAI.Net#authentication for details.");
+				throw new AuthenticationException("You must provide API authentication.  Please refer to https://github.com/glienard/OpenAI.Net#authentication for details.");
 			}
 
 			var client = new HttpClient();
 			client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", auth.ThisOrDefault().ApiKey);
-			client.DefaultRequestHeaders.Add("User-Agent", "williamwelsh/openai-dotnet");
+			client.DefaultRequestHeaders.Add("User-Agent", "glienard/openai-dotnet");
 
 			var response = await client.GetAsync(@"https://api.openai.com/v1/engines/" + id);
 			if (response.IsSuccessStatusCode)

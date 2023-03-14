@@ -25,13 +25,16 @@ namespace OpenAI
         {
             if (Api.Auth?.ApiKey is null)
             {
-                throw new AuthenticationException("You must provide API authentication.  Please refer to https://github.com/WilliamWelsh/OpenAI.Net#authentication for details.");
+                throw new AuthenticationException("You must provide API authentication.  Please refer to https://github.com/glienard/OpenAI.Net#authentication for details.");
             }
+            if (Api.UsingEngine.EngineName.StartsWith("gpt-"))
+                throw new NotImplementedException($"{Api.UsingEngine.EngineName} does not implement classification. Use ChatCompletion or refer to https://github.com/glienard/OpenAI.Net#chatgpt for details. ");
+
 
             //request.Stream = false;
             var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Api.Auth.ApiKey);
-            client.DefaultRequestHeaders.Add("User-Agent", "williamwelsh/openai-dotnet");
+            client.DefaultRequestHeaders.Add("User-Agent", "glienard/openai-dotnet");
 
             var jsonContent = JsonConvert.SerializeObject(request, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
             var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");

@@ -11,22 +11,22 @@ using System.Threading.Tasks;
 namespace OpenAI
 {
 	/// <summary>
-	/// Text generation is the core function of the API. You give the API a prompt, and it generates a completion. The way you “program” the API to do a task is by simply describing the task in plain english or providing a few written examples. This simple approach works for a wide range of use cases, including summarization, translation, grammar correction, question answering, chatbots, composing emails, and much more (see the prompt library for inspiration).
+	/// Text generation is the core function of the API. You give the API a prompt, and it generates a ChatCompletion. The way you “program” the API to do a task is by simply describing the task in plain english or providing a few written examples. This simple approach works for a wide range of use cases, including summarization, translation, grammar correction, question answering, chatbots, composing emails, and much more (see the prompt library for inspiration).
 	/// </summary>
-	public class CompletionEndpoint
+	public class ChatCompletionEndpoint
 	{
 		private OpenAIAPI Api;
 
 		/// <summary>
 		/// This allows you to set default parameters for every request, for example to set a default temperature or max tokens.  For every request, if you do not have a parameter set on the request but do have it set here as a default, the request will automatically pick up the default value.
 		/// </summary>
-		public CompletionRequest DefaultCompletionRequestArgs { get; set; } = new CompletionRequest();
+		public ChatCompletionRequest DefaultChatCompletionRequestArgs { get; set; } = new ChatCompletionRequest();
 
 		/// <summary>
-		/// Constructor of the api endpoint.  Rather than instantiating this yourself, access it through an instance of <see cref="OpenAIAPI"/> as <see cref="OpenAIAPI.Completions"/>.
+		/// Constructor of the api endpoint.  Rather than instantiating this yourself, access it through an instance of <see cref="OpenAIAPI"/> as <see cref="OpenAIAPI.ChatCompletions"/>.
 		/// </summary>
 		/// <param name="api"></param>
-		internal CompletionEndpoint(OpenAIAPI api)
+		internal ChatCompletionEndpoint(OpenAIAPI api)
 		{
 			this.Api = api;
 		}
@@ -36,18 +36,18 @@ namespace OpenAI
 		/// <summary>
 		/// Ask the API to complete the prompt(s) using the specified request.  This is non-streaming, so it will wait until the API returns the full result.
 		/// </summary>
-		/// <param name="request">The request to send to the API.  This does not fall back to default values specified in <see cref="DefaultCompletionRequestArgs"/>.</param>
-		/// <returns>Asynchronously returns the completion result.  Look in its <see cref="CompletionResult.Choices"/> property for the completions.</returns>
-		public async Task<CompletionResult> CreateCompletionAsync(CompletionRequest request)
+		/// <param name="request">The request to send to the API.  This does not fall back to default values specified in <see cref="DefaultChatCompletionRequestArgs"/>.</param>
+		/// <returns>Asynchronously returns the ChatCompletion result.  Look in its <see cref="ChatCompletionResult.Choices"/> property for the ChatCompletions.</returns>
+		public async Task<ChatCompletionResult> CreateChatCompletionAsync(ChatCompletionRequest request)
 		{
 			if (Api.Auth?.ApiKey is null)
 			{
 				throw new AuthenticationException("You must provide API authentication.  Please refer to https://github.com/glienard/OpenAI.Net#authentication for details.");
 			}
-			if (Api.UsingEngine.EngineName.StartsWith("gpt-"))
-				throw new NotImplementedException($"{Api.UsingEngine.EngineName} does not implement completion. Use ChatCompletion or refer to https://github.com/glienard/OpenAI.Net#chatgpt for details. ");
+            if (!Api.UsingEngine.EngineName.StartsWith("gpt-"))
+                throw new NotImplementedException($"{Api.UsingEngine.EngineName} does not implement chat completion. Please refer to https://github.com/glienard/OpenAI.Net#chatgpt for details. ");
 
-
+			request.Model = Api.UsingEngine.EngineName;
             request.Stream = false;
             var client = new HttpClient();
 			client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Api.Auth.ApiKey);
@@ -56,13 +56,14 @@ namespace OpenAI
             var jsonContent = JsonConvert.SerializeObject(request, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
 			var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-			var completionsEndPoint = $"https://api.openai.com/v1/engines/{Api.UsingEngine.EngineName}/completions";
-            var response = await client.PostAsync(completionsEndPoint, stringContent);
+            var chatCompletionsEndPoint = $"https://api.openai.com/v1/chat/completions";
+
+            var response = await client.PostAsync(chatCompletionsEndPoint, stringContent);
 			if (response.IsSuccessStatusCode)
 			{
                 var resultAsString = await response.Content.ReadAsStringAsync();
 
-				var res = JsonConvert.DeserializeObject<CompletionResult>(resultAsString);
+				var res = JsonConvert.DeserializeObject<ChatCompletionResult>(resultAsString);
 				try
 				{
 					res.Organization = response.Headers.GetValues("Openai-Organization").FirstOrDefault();
@@ -75,24 +76,24 @@ namespace OpenAI
 				return res;
 			}
 
-            throw new HttpRequestException("Error calling OpenAi API to get completion.  HTTP status code: " + response.StatusCode + ". Request body: " + jsonContent);
+            throw new HttpRequestException("Error calling OpenAi API to get ChatCompletion.  HTTP status code: " + response.StatusCode + ". Request body: " + jsonContent);
         }
 
 
 		/// <summary>
 		/// Ask the API to complete the prompt(s) using the specified request and a requested number of outputs.  This is non-streaming, so it will wait until the API returns the full result.
 		/// </summary>
-		/// <param name="request">The request to send to the API.  This does not fall back to default values specified in <see cref="DefaultCompletionRequestArgs"/>.</param>
-		/// <param name="numOutputs">Overrides <see cref="CompletionRequest.NumChoicesPerPrompt"/> as a convenience.</param>
-		/// <returns>Asynchronously returns the completion result.  Look in its <see cref="CompletionResult.Choices"/> property for the completions, which should have a length equal to <paramref name="numOutputs"/>.</returns>
-		public Task<CompletionResult> CreateCompletionsAsync(CompletionRequest request, int numOutputs = 5)
+		/// <param name="request">The request to send to the API.  This does not fall back to default values specified in <see cref="DefaultChatCompletionRequestArgs"/>.</param>
+		/// <param name="numOutputs">Overrides <see cref="ChatCompletionRequest.NumChoicesPerPrompt"/> as a convenience.</param>
+		/// <returns>Asynchronously returns the ChatCompletion result.  Look in its <see cref="ChatCompletionResult.Choices"/> property for the ChatCompletions, which should have a length equal to <paramref name="numOutputs"/>.</returns>
+		public Task<ChatCompletionResult> CreateChatCompletionsAsync(ChatCompletionRequest request, int numOutputs = 5)
 		{
 			request.NumChoicesPerPrompt = numOutputs;
-			return CreateCompletionAsync(request);
+			return CreateChatCompletionAsync(request);
 		}
 
         /// <summary>
-        /// Ask the API to complete the prompt(s) using the specified parameters.  This is non-streaming, so it will wait until the API returns the full result.  Any non-specified parameters will fall back to default values specified in <see cref="DefaultCompletionRequestArgs"/> if present.
+        /// Ask the API to complete the prompt(s) using the specified parameters.  This is non-streaming, so it will wait until the API returns the full result.  Any non-specified parameters will fall back to default values specified in <see cref="DefaultChatCompletionRequestArgs"/> if present.
         /// </summary>
         /// <param name="prompt">The prompt to generate from</param>
         /// <param name="max_tokens">How many tokens to complete to. Can return fewer if a stop sequence is hit.</param>
@@ -101,12 +102,12 @@ namespace OpenAI
         /// <param name="numOutputs">How many different choices to request for each prompt.</param>
         /// <param name="presencePenalty">The scale of the penalty applied if a token is already present at all.  Should generally be between 0 and 1, although negative numbers are allowed to encourage token reuse.</param>
         /// <param name="frequencyPenalty">The scale of the penalty for how often a token is used.  Should generally be between 0 and 1, although negative numbers are allowed to encourage token reuse.</param>
-        /// <param name="logProbs">Include the log probabilities on the logprobs most likely tokens, which can be found in <see cref="CompletionResult.Choices"/> -> <see cref="Choice.Logprobs"/>. So for example, if logprobs is 10, the API will return a list of the 10 most likely tokens. If logprobs is supplied, the API will always return the logprob of the sampled token, so there may be up to logprobs+1 elements in the response.</param>
-        /// <param name="echo">Echo back the prompt in addition to the completion.</param>
+        /// <param name="logProbs">Include the log probabilities on the logprobs most likely tokens, which can be found in <see cref="ChatCompletionResult.Choices"/> -> <see cref="Choice.Logprobs"/>. So for example, if logprobs is 10, the API will return a list of the 10 most likely tokens. If logprobs is supplied, the API will always return the logprob of the sampled token, so there may be up to logprobs+1 elements in the response.</param>
+        /// <param name="echo">Echo back the prompt in addition to the ChatCompletion.</param>
         /// <param name="user">A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.</param>
         /// <param name="stopSequences">One or more sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.</param>
-        /// <returns>Asynchronously returns the completion result.  Look in its <see cref="CompletionResult.Choices"/> property for the completions.</returns>
-        public Task<CompletionResult> CreateCompletionAsync(string prompt,
+        /// <returns>Asynchronously returns the ChatCompletion result.  Look in its <see cref="ChatCompletionResult.Choices"/> property for the ChatCompletions.</returns>
+        public Task<ChatCompletionResult> CreateChatCompletionAsync(string prompt,
 			int? max_tokens = null,
 			double? temperature = null,
 			double? top_p = null,
@@ -119,40 +120,40 @@ namespace OpenAI
 			params string[] stopSequences
 			)
 		{
-			var request = new CompletionRequest(DefaultCompletionRequestArgs)
+			var request = new ChatCompletionRequest(DefaultChatCompletionRequestArgs)
 			{
-				Prompt = prompt,
-				MaxTokens = max_tokens ?? DefaultCompletionRequestArgs.MaxTokens,
-				Temperature = temperature ?? DefaultCompletionRequestArgs.Temperature,
-				TopP = top_p ?? DefaultCompletionRequestArgs.TopP,
-				NumChoicesPerPrompt = numOutputs ?? DefaultCompletionRequestArgs.NumChoicesPerPrompt,
-				PresencePenalty = presencePenalty ?? DefaultCompletionRequestArgs.PresencePenalty,
-				FrequencyPenalty = frequencyPenalty ?? DefaultCompletionRequestArgs.FrequencyPenalty,
-				Logprobs = logProbs ?? DefaultCompletionRequestArgs.Logprobs,
-				Echo = echo ?? DefaultCompletionRequestArgs.Echo,
-				User = user ?? DefaultCompletionRequestArgs.User,
-				MultipleStopSequences = stopSequences ?? DefaultCompletionRequestArgs.MultipleStopSequences
+				Message = prompt,
+				MaxTokens = max_tokens ?? DefaultChatCompletionRequestArgs.MaxTokens,
+				Temperature = temperature ?? DefaultChatCompletionRequestArgs.Temperature,
+				TopP = top_p ?? DefaultChatCompletionRequestArgs.TopP,
+				NumChoicesPerPrompt = numOutputs ?? DefaultChatCompletionRequestArgs.NumChoicesPerPrompt,
+				PresencePenalty = presencePenalty ?? DefaultChatCompletionRequestArgs.PresencePenalty,
+				FrequencyPenalty = frequencyPenalty ?? DefaultChatCompletionRequestArgs.FrequencyPenalty,
+				Logprobs = logProbs ?? DefaultChatCompletionRequestArgs.Logprobs,
+				Echo = echo ?? DefaultChatCompletionRequestArgs.Echo,
+				User = user ?? DefaultChatCompletionRequestArgs.User,
+				MultipleStopSequences = stopSequences ?? DefaultChatCompletionRequestArgs.MultipleStopSequences
 			};
-			return CreateCompletionAsync(request);
+			return CreateChatCompletionAsync(request);
 		}
 
         /// <summary>
-        /// Ask the API to complete the prompt(s) using the specified parameters.  This is non-streaming, so it will wait until the API returns the full result.  Any non-specified parameters will fall back to default values specified in <see cref="DefaultCompletionRequestArgs"/> if present.
+        /// Ask the API to complete the prompt(s) using the specified parameters.  This is non-streaming, so it will wait until the API returns the full result.  Any non-specified parameters will fall back to default values specified in <see cref="DefaultChatCompletionRequestArgs"/> if present.
         /// </summary>
         /// <param name="prompt">The prompt to generate from</param>
         /// <param name="max_tokens">How many tokens to complete to. Can return fewer if a stop sequence is hit.</param>
         /// <param name="temperature">What sampling temperature to use. Higher values means the model will take more risks. Try 0.9 for more creative applications, and 0 (argmax sampling) for ones with a well-defined answer. It is generally recommend to use this or <paramref name="top_p"/> but not both.</param>
-        /// <param name="best_of">How many different completions to generate server-side before returning the "best" (the one with the highest log probability per token).</param>
+        /// <param name="best_of">How many different ChatCompletions to generate server-side before returning the "best" (the one with the highest log probability per token).</param>
         /// <param name="top_p">An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered. It is generally recommend to use this or <paramref name="temperature"/> but not both.</param>
         /// <param name="numOutputs">How many different choices to request for each prompt.</param>
         /// <param name="presencePenalty">The scale of the penalty applied if a token is already present at all.  Should generally be between 0 and 1, although negative numbers are allowed to encourage token reuse.</param>
         /// <param name="frequencyPenalty">The scale of the penalty for how often a token is used.  Should generally be between 0 and 1, although negative numbers are allowed to encourage token reuse.</param>
-        /// <param name="logProbs">Include the log probabilities on the logprobs most likely tokens, which can be found in <see cref="CompletionResult.Choices"/> -> <see cref="Choice.Logprobs"/>. So for example, if logprobs is 10, the API will return a list of the 10 most likely tokens. If logprobs is supplied, the API will always return the logprob of the sampled token, so there may be up to logprobs+1 elements in the response.</param>
-        /// <param name="echo">Echo back the prompt in addition to the completion.</param>
+        /// <param name="logProbs">Include the log probabilities on the logprobs most likely tokens, which can be found in <see cref="ChatCompletionResult.Choices"/> -> <see cref="Choice.Logprobs"/>. So for example, if logprobs is 10, the API will return a list of the 10 most likely tokens. If logprobs is supplied, the API will always return the logprob of the sampled token, so there may be up to logprobs+1 elements in the response.</param>
+        /// <param name="echo">Echo back the prompt in addition to the ChatCompletion.</param>
         /// <param name="user">A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.</param>
         /// <param name="stopSequences">One or more sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.</param>
-        /// <returns>Asynchronously returns the completion result.  Look in its <see cref="CompletionResult.Choices"/> property for the completions.</returns>
-        public Task<CompletionResult> CreateCompletionAsync(string prompt,
+        /// <returns>Asynchronously returns the ChatCompletion result.  Look in its <see cref="ChatCompletionResult.Choices"/> property for the ChatCompletions.</returns>
+        public Task<ChatCompletionResult> CreateChatCompletionAsync(string prompt,
 			int? max_tokens = null,
 			double? temperature = null,
 			int? best_of = null,
@@ -166,36 +167,36 @@ namespace OpenAI
 			params string[] stopSequences
 			)
 		{
-			var request = new CompletionRequest(DefaultCompletionRequestArgs)
+			var request = new ChatCompletionRequest(DefaultChatCompletionRequestArgs)
 			{
-				Prompt = prompt,
-				MaxTokens = max_tokens ?? DefaultCompletionRequestArgs.MaxTokens,
-				Temperature = temperature ?? DefaultCompletionRequestArgs.Temperature,
-				BestOf = best_of ?? DefaultCompletionRequestArgs.BestOf,
-				TopP = top_p ?? DefaultCompletionRequestArgs.TopP,
-				NumChoicesPerPrompt = numOutputs ?? DefaultCompletionRequestArgs.NumChoicesPerPrompt,
-				PresencePenalty = presencePenalty ?? DefaultCompletionRequestArgs.PresencePenalty,
-				FrequencyPenalty = frequencyPenalty ?? DefaultCompletionRequestArgs.FrequencyPenalty,
-				Logprobs = logProbs ?? DefaultCompletionRequestArgs.Logprobs,
-				Echo = echo ?? DefaultCompletionRequestArgs.Echo,
-				User = user ?? DefaultCompletionRequestArgs.User,
-				MultipleStopSequences = stopSequences ?? DefaultCompletionRequestArgs.MultipleStopSequences
+				Message = prompt,
+				MaxTokens = max_tokens ?? DefaultChatCompletionRequestArgs.MaxTokens,
+				Temperature = temperature ?? DefaultChatCompletionRequestArgs.Temperature,
+				BestOf = best_of ?? DefaultChatCompletionRequestArgs.BestOf,
+				TopP = top_p ?? DefaultChatCompletionRequestArgs.TopP,
+				NumChoicesPerPrompt = numOutputs ?? DefaultChatCompletionRequestArgs.NumChoicesPerPrompt,
+				PresencePenalty = presencePenalty ?? DefaultChatCompletionRequestArgs.PresencePenalty,
+				FrequencyPenalty = frequencyPenalty ?? DefaultChatCompletionRequestArgs.FrequencyPenalty,
+				Logprobs = logProbs ?? DefaultChatCompletionRequestArgs.Logprobs,
+				Echo = echo ?? DefaultChatCompletionRequestArgs.Echo,
+				User = user ?? DefaultChatCompletionRequestArgs.User,
+				MultipleStopSequences = stopSequences ?? DefaultChatCompletionRequestArgs.MultipleStopSequences
 			};
-			return CreateCompletionAsync(request);
+			return CreateChatCompletionAsync(request);
 		}
 
 		/// <summary>
-		/// Ask the API to complete the prompt(s) using the specified promptes, with other paramets being drawn from default values specified in <see cref="DefaultCompletionRequestArgs"/> if present.  This is non-streaming, so it will wait until the API returns the full result.
+		/// Ask the API to complete the prompt(s) using the specified promptes, with other paramets being drawn from default values specified in <see cref="DefaultChatCompletionRequestArgs"/> if present.  This is non-streaming, so it will wait until the API returns the full result.
 		/// </summary>
 		/// <param name="prompts">One or more prompts to generate from</param>
 		/// <returns></returns>
-		public Task<CompletionResult> CreateCompletionAsync(params string[] prompts)
+		public Task<ChatCompletionResult> CreateChatCompletionAsync(List<ChatMessage> prompts)
 		{
-            var request = new CompletionRequest(DefaultCompletionRequestArgs)
+            var request = new ChatCompletionRequest(DefaultChatCompletionRequestArgs)
 			{
-				MultiplePrompts = prompts
+				MultipleMessages = prompts
 			};
-			return CreateCompletionAsync(request);
+			return CreateChatCompletionAsync(request);
 		}
 
 		#endregion
@@ -204,24 +205,24 @@ namespace OpenAI
 
 		/// <summary>
 		/// Ask the API to complete the prompt(s) using the specified request, and stream the results to the <paramref name="resultHandler"/> as they come in.
-		/// If you are on the latest C# supporting async enumerables, you may prefer the cleaner syntax of <see cref="StreamCompletionEnumerableAsync(CompletionRequest)"/> instead.
+		/// If you are on the latest C# supporting async enumerables, you may prefer the cleaner syntax of <see cref="StreamChatCompletionEnumerableAsync(ChatCompletionRequest)"/> instead.
 		/// </summary>
-		/// <param name="request">The request to send to the API.  This does not fall back to default values specified in <see cref="DefaultCompletionRequestArgs"/>.</param>
+		/// <param name="request">The request to send to the API.  This does not fall back to default values specified in <see cref="DefaultChatCompletionRequestArgs"/>.</param>
 		/// <param name="resultHandler">An action to be called as each new result arrives, which includes the index of the result in the overall result set.</param>
-		public async Task StreamCompletionAsync(CompletionRequest request, Action<int, CompletionResult> resultHandler)
+		public async Task StreamChatCompletionAsync(ChatCompletionRequest request, Action<int, ChatCompletionResult> resultHandler)
 		{
 			if (Api.Auth?.ApiKey is null)
 			{
 				throw new AuthenticationException("You must provide API authentication.  Please refer to https://github.com/glienard/OpenAI.Net#authentication for details.");
 			}
 
-			request = new CompletionRequest(request) { Stream = true };
+			request = new ChatCompletionRequest(request) { Stream = true };
             var client = new HttpClient();
 
             var jsonContent = JsonConvert.SerializeObject(request, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
 			var stringContent = new StringContent(jsonContent, UnicodeEncoding.UTF8, "application/json");
 
-			using (HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, $"https://api.openai.com/v1/engines/{Api.UsingEngine.EngineName}/completions"))
+			using (HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, $"https://api.openai.com/v1/engines/{Api.UsingEngine.EngineName}/ChatCompletions"))
 			{
 				req.Content = stringContent;
 				req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Api.Auth.ApiKey); ;
@@ -250,7 +251,7 @@ namespace OpenAI
                             if (!string.IsNullOrWhiteSpace(line))
                             {
                                 index++;
-                                var res = JsonConvert.DeserializeObject<CompletionResult>(line.Trim());
+                                var res = JsonConvert.DeserializeObject<ChatCompletionResult>(line.Trim());
                                 try
                                 {
                                     res.Organization = response.Headers.GetValues("Openai-Organization").FirstOrDefault();
@@ -266,42 +267,42 @@ namespace OpenAI
 				}
 				else
 				{
-					throw new HttpRequestException("Error calling OpenAi API to get completion.  HTTP status code: " + response.StatusCode.ToString() + ". Request body: " + jsonContent);
+					throw new HttpRequestException("Error calling OpenAi API to get ChatCompletion.  HTTP status code: " + response.StatusCode.ToString() + ". Request body: " + jsonContent);
 				}
 			}
 		}
 
 		/// <summary>
 		/// Ask the API to complete the prompt(s) using the specified request, and stream the results to the <paramref name="resultHandler"/> as they come in.
-		/// If you are on the latest C# supporting async enumerables, you may prefer the cleaner syntax of <see cref="StreamCompletionEnumerableAsync(CompletionRequest)"/> instead.
+		/// If you are on the latest C# supporting async enumerables, you may prefer the cleaner syntax of <see cref="StreamChatCompletionEnumerableAsync(ChatCompletionRequest)"/> instead.
 		/// </summary>
-		/// <param name="request">The request to send to the API.  This does not fall back to default values specified in <see cref="DefaultCompletionRequestArgs"/>.</param>
+		/// <param name="request">The request to send to the API.  This does not fall back to default values specified in <see cref="DefaultChatCompletionRequestArgs"/>.</param>
 		/// <param name="resultHandler">An action to be called as each new result arrives.</param>
-		public async Task StreamCompletionAsync(CompletionRequest request, Action<CompletionResult> resultHandler)
+		public async Task StreamChatCompletionAsync(ChatCompletionRequest request, Action<ChatCompletionResult> resultHandler)
 		{
-			await StreamCompletionAsync(request, (i, res) => resultHandler(res));
+			await StreamChatCompletionAsync(request, (i, res) => resultHandler(res));
 		}
 
 		/// <summary>
 		/// Ask the API to complete the prompt(s) using the specified request, and stream the results to the <paramref name="resultHandler"/> as they come in.
-		/// If you are not using C# 8 supporting async enumerables or if you are using the .NET Framework, you may need to use <see cref="StreamCompletionAsync(CompletionRequest, Action{CompletionResult})"/> instead.
+		/// If you are not using C# 8 supporting async enumerables or if you are using the .NET Framework, you may need to use <see cref="StreamChatCompletionAsync(ChatCompletionRequest, Action{ChatCompletionResult})"/> instead.
 		/// </summary>
-		/// <param name="request">The request to send to the API.  This does not fall back to default values specified in <see cref="DefaultCompletionRequestArgs"/>.</param>
+		/// <param name="request">The request to send to the API.  This does not fall back to default values specified in <see cref="DefaultChatCompletionRequestArgs"/>.</param>
 		/// <returns>An async enumerable with each of the results as they come in.  See <seealso cref="https://docs.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-8#asynchronous-streams"/> for more details on how to consume an async enumerable.</returns>
-		public async IAsyncEnumerable<CompletionResult> StreamCompletionEnumerableAsync(CompletionRequest request)
+		public async IAsyncEnumerable<ChatCompletionResult> StreamChatCompletionEnumerableAsync(ChatCompletionRequest request)
 		{
 			if (Api.Auth?.ApiKey is null)
 			{
 				throw new AuthenticationException("You must provide API authentication.  Please refer to https://github.com/glienard/OpenAI.Net#authentication for details.");
 			}
 
-			request = new CompletionRequest(request) { Stream = true };
+			request = new ChatCompletionRequest(request) { Stream = true };
             var client = new HttpClient();
 
             var jsonContent = JsonConvert.SerializeObject(request, new JsonSerializerSettings() { NullValueHandling = NullValueHandling.Ignore });
 			var stringContent = new StringContent(jsonContent, UnicodeEncoding.UTF8, "application/json");
 
-			using (HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, $"https://api.openai.com/v1/engines/{Api.UsingEngine.EngineName}/completions"))
+			using (HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Post, $"https://api.openai.com/v1/engines/{Api.UsingEngine.EngineName}/ChatCompletions"))
 			{
 				req.Content = stringContent;
 				req.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Api.Auth.ApiKey); ;
@@ -327,7 +328,7 @@ namespace OpenAI
 
                             if (!string.IsNullOrWhiteSpace(line))
                             {
-                                var res = JsonConvert.DeserializeObject<CompletionResult>(line.Trim());
+                                var res = JsonConvert.DeserializeObject<ChatCompletionResult>(line.Trim());
                                 yield return res;
                             }
                         }
@@ -335,15 +336,15 @@ namespace OpenAI
 				}
 				else
 				{
-					throw new HttpRequestException("Error calling OpenAi API to get completion.  HTTP status code: " + response.StatusCode.ToString() + ". Request body: " + jsonContent);
+					throw new HttpRequestException("Error calling OpenAi API to get ChatCompletion.  HTTP status code: " + response.StatusCode.ToString() + ". Request body: " + jsonContent);
 				}
 			}
 		}
 
         /// <summary>
         /// Ask the API to complete the prompt(s) using the specified parameters. 
-        /// Any non-specified parameters will fall back to default values specified in <see cref="DefaultCompletionRequestArgs"/> if present.
-        /// If you are not using C# 8 supporting async enumerables or if you are using the .NET Framework, you may need to use <see cref="StreamCompletionAsync(CompletionRequest, Action{CompletionResult})"/> instead.
+        /// Any non-specified parameters will fall back to default values specified in <see cref="DefaultChatCompletionRequestArgs"/> if present.
+        /// If you are not using C# 8 supporting async enumerables or if you are using the .NET Framework, you may need to use <see cref="StreamChatCompletionAsync(ChatCompletionRequest, Action{ChatCompletionResult})"/> instead.
         /// </summary>
         /// <param name="prompt">The prompt to generate from</param>
         /// <param name="max_tokens">How many tokens to complete to. Can return fewer if a stop sequence is hit.</param>
@@ -352,12 +353,12 @@ namespace OpenAI
         /// <param name="numOutputs">How many different choices to request for each prompt.</param>
         /// <param name="presencePenalty">The scale of the penalty applied if a token is already present at all.  Should generally be between 0 and 1, although negative numbers are allowed to encourage token reuse.</param>
         /// <param name="frequencyPenalty">The scale of the penalty for how often a token is used.  Should generally be between 0 and 1, although negative numbers are allowed to encourage token reuse.</param>
-        /// <param name="logProbs">Include the log probabilities on the logprobs most likely tokens, which can be found in <see cref="CompletionResult.Choices"/> -> <see cref="Choice.Logprobs"/>. So for example, if logprobs is 10, the API will return a list of the 10 most likely tokens. If logprobs is supplied, the API will always return the logprob of the sampled token, so there may be up to logprobs+1 elements in the response.</param>
-        /// <param name="echo">Echo back the prompt in addition to the completion.</param>
+        /// <param name="logProbs">Include the log probabilities on the logprobs most likely tokens, which can be found in <see cref="ChatCompletionResult.Choices"/> -> <see cref="Choice.Logprobs"/>. So for example, if logprobs is 10, the API will return a list of the 10 most likely tokens. If logprobs is supplied, the API will always return the logprob of the sampled token, so there may be up to logprobs+1 elements in the response.</param>
+        /// <param name="echo">Echo back the prompt in addition to the ChatCompletion.</param>
         /// <param name="user">A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.</param>
         /// <param name="stopSequences">One or more sequences where the API will stop generating further tokens. The returned text will not contain the stop sequence.</param>
         /// <returns>An async enumerable with each of the results as they come in.  See <see href="https://docs.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-8#asynchronous-streams">the C# docs</see> for more details on how to consume an async enumerable.</returns>
-        public IAsyncEnumerable<CompletionResult> StreamCompletionEnumerableAsync(string prompt,
+        public IAsyncEnumerable<ChatCompletionResult> StreamChatCompletionEnumerableAsync(string prompt,
 			int? max_tokens = null,
 			double? temperature = null,
 			double? top_p = null,
@@ -369,36 +370,36 @@ namespace OpenAI
 			string? user = null,
 			params string[] stopSequences)
 		{
-            var request = new CompletionRequest(DefaultCompletionRequestArgs)
+            var request = new ChatCompletionRequest(DefaultChatCompletionRequestArgs)
 			{
-				Prompt = prompt,
-				MaxTokens = max_tokens ?? DefaultCompletionRequestArgs.MaxTokens,
-				Temperature = temperature ?? DefaultCompletionRequestArgs.Temperature,
-				TopP = top_p ?? DefaultCompletionRequestArgs.TopP,
-				NumChoicesPerPrompt = numOutputs ?? DefaultCompletionRequestArgs.NumChoicesPerPrompt,
-				PresencePenalty = presencePenalty ?? DefaultCompletionRequestArgs.PresencePenalty,
-				FrequencyPenalty = frequencyPenalty ?? DefaultCompletionRequestArgs.FrequencyPenalty,
-				Logprobs = logProbs ?? DefaultCompletionRequestArgs.Logprobs,
-				Echo = echo ?? DefaultCompletionRequestArgs.Echo,
-				User = user ?? DefaultCompletionRequestArgs.User,
-				MultipleStopSequences = stopSequences ?? DefaultCompletionRequestArgs.MultipleStopSequences,
+				Message = prompt,
+				MaxTokens = max_tokens ?? DefaultChatCompletionRequestArgs.MaxTokens,
+				Temperature = temperature ?? DefaultChatCompletionRequestArgs.Temperature,
+				TopP = top_p ?? DefaultChatCompletionRequestArgs.TopP,
+				NumChoicesPerPrompt = numOutputs ?? DefaultChatCompletionRequestArgs.NumChoicesPerPrompt,
+				PresencePenalty = presencePenalty ?? DefaultChatCompletionRequestArgs.PresencePenalty,
+				FrequencyPenalty = frequencyPenalty ?? DefaultChatCompletionRequestArgs.FrequencyPenalty,
+				Logprobs = logProbs ?? DefaultChatCompletionRequestArgs.Logprobs,
+				Echo = echo ?? DefaultChatCompletionRequestArgs.Echo,
+				User = user ?? DefaultChatCompletionRequestArgs.User,
+				MultipleStopSequences = stopSequences ?? DefaultChatCompletionRequestArgs.MultipleStopSequences,
 				Stream = true
 			};
-			return StreamCompletionEnumerableAsync(request);
+			return StreamChatCompletionEnumerableAsync(request);
 		}
 		#endregion
 
 		#region Helpers
 
 		/// <summary>
-		/// Simply returns a string of the prompt followed by the best completion
+		/// Simply returns a string of the prompt followed by the best ChatCompletion
 		/// </summary>
-		/// <param name="request">The request to send to the API.  This does not fall back to default values specified in <see cref="DefaultCompletionRequestArgs"/>.</param>
-		/// <returns>A string of the prompt followed by the best completion</returns>
-		public async Task<string> CreateAndFormatCompletion(CompletionRequest request)
+		/// <param name="request">The request to send to the API.  This does not fall back to default values specified in <see cref="DefaultChatCompletionRequestArgs"/>.</param>
+		/// <returns>A string of the prompt followed by the best ChatCompletion</returns>
+		public async Task<string> CreateAndFormatChatCompletion(ChatCompletionRequest request)
 		{
-            var prompt = request.Prompt;
-			var result = await CreateCompletionAsync(request);
+            var prompt = request.Message;
+			var result = await CreateChatCompletionAsync(request);
 			return prompt + result;
 		}
 

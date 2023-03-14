@@ -110,10 +110,17 @@ namespace OpenAI
 		/// </summary>
 		public static Engine CushmanCodex => new Engine("cushman-codex") { Owner = "openai", Ready = true };
 
-		/// <summary>
-		/// The default Engine to use in the case no other is specified.  Defaults to <see cref="Davinci"/>
-		/// </summary>
-		public static Engine Default => Davinci;
+
+        /// <summary>
+        /// The most powerful, largest engine available, although the speed is quite slow.
+        /// </summary>
+        public static Engine ChatGPT => new Engine("gpt-3.5-turbo") { Owner = "openai", Ready = true };
+
+
+        /// <summary>
+        /// The default Engine to use in the case no other is specified.  Defaults to <see cref="Davinci"/>
+        /// </summary>
+        public static Engine Default => Davinci;
 
 		/// <summary>
 		/// Gets more details about this Engine from the API, specifically properties such as <see cref="Owner"/> and <see cref="Ready"/>

@@ -7,7 +7,7 @@
     <Description>An unofficial .NET API wrapper for OpenAI.</Description>
     <TargetFrameworks Condition=" '$(OS)' == 'Windows_NT' ">net461;netstandard2.0;netstandard2.1</TargetFrameworks>
     <TargetFrameworks Condition=" '$(OS)' != 'Windows_NT' ">netstandard2.0;netstandard2.1</TargetFrameworks>
-    <RepositoryUrl>https://github.com/WilliamWelsh/OpenAI.Net</RepositoryUrl>
+    <RepositoryUrl>https://github.com/glienard/OpenAI.Net</RepositoryUrl>
     <PackageIcon>icon.png</PackageIcon>
     <Authors>William Welsh</Authors>
     <Company />

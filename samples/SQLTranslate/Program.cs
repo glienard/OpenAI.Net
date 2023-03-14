@@ -37,6 +37,9 @@ namespace SQLTranslate
             // Initialize the API
             var api = new OpenAIAPI(apiKeys: "YOUR_API_KEY_HERE", engine: Engine.DavinciCodex);
 
+
+
+
             // Set up the  request
             var request = new CompletionRequestBuilder()
                 .WithPrompt("Convert my short hand into a first-hand account of the meeting:\n\nTom: Profits up 50%\nJane: New servers are online\nKjel: Need more time to fix software\nJane: Happy to help\nParkman: Beta testing almost done\n\nSummary:")
