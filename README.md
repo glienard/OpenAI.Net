@@ -1,5 +1,5 @@
 <h1 align="center">
-	<img src="https://raw.githubusercontent.com/WilliamWelsh/OpenAI.Net/main/logo.png" alt="OpenAI.Net" />
+	<img src="https://raw.githubusercontent.com/glienard/OpenAI.Net/main/logo.png" alt="OpenAI.Net" />
 	<br/>
 	OpenAI.Net
 </h1>
@@ -42,10 +42,26 @@ var api = new OpenAIAPI(); // uses default, env, or config file
 
 ## Examples
 
-You can view built examples in the [samples](https://github.com/WilliamWelsh/OpenAI.Net/tree/main/samples) folder.  These examples include very basic access of endpoints, as well as versions of [OpenAI's example applications](https://beta.openai.com/examples) using this wrapper.  
+You can view built examples in the [samples](https://github.com/glienard/OpenAI.Net/tree/main/samples) folder.  These examples include very basic access of endpoints, as well as versions of [OpenAI's example applications](https://platform.openai.com/examples) using this wrapper.  
+
+### ChatGPT
+ChatGPT was recently released so it can be used using the API. Note that the only way you can use the ChatGPT engine is by using the Engine ChatGPT (gpt-3.5-turbo) and make use of the ChatCompletions. Given a prompt, the model will return a completion. [View on OpenAI](https://platform.openai.com/docs/guides/chat).  
+
+```csharp
+var api = new OpenAIAPI(apiKeys: "YOUR_API_KEY_HERE", engine: Engine.ChatGPT);
+
+var request = new ChatCompletionRequestBuilder()
+     .WithPrompt("Where is the Yankee stadium?")
+     .WithMaxTokens(50)
+     .Build();
+
+var result = await api.ChatCompletions.CreateChatCompletionAsync(request);
+Console.WriteLine(result.ToString());
+// Should print something like "The Yankee Stadium is located in the Bronx borough of New York City, United States."
+```
 
 ### Completions
-Given a prompt, the model will return one or more predicted completions, and can also return the probabilities of alternative tokens at each position. [View on OpenAI](https://beta.openai.com/docs/api-reference/completions).  
+Given a prompt, the model will return one or more predicted completions, and can also return the probabilities of alternative tokens at each position. [View on OpenAI](https://platform.openai.com/docs/api-reference/completions).  
 
 ```csharp
 var api = new OpenAIAPI(apiKeys: "YOUR_API_KEY_HERE", engine: Engine.Davinci);
@@ -61,7 +77,7 @@ Console.WriteLine(result.ToString());
 ```
 
 ### Searches
-Given a query and a set of documents or labels, the model ranks each document based on its semantic similarity to the provided query. [View on OpenAI](https://beta.openai.com/docs/api-reference/searches).  
+Given a query and a set of documents or labels, the model ranks each document based on its semantic similarity to the provided query. [View on OpenAI](https://platform.openai.com/docs/api-reference/searches).  
 
 ```csharp
 var api = new OpenAIAPI(apiKeys: "YOUR_API_KEY_HERE", engine: Engine.Davinci);
@@ -82,7 +98,7 @@ Console.WriteLine(result);
 ```
 
 ### Classifications
-Given a query and a set of labeled examples, the model will predict the most likely label for the query. Useful as a drop-in replacement for any ML classification or text-to-label task. [View on OpenAI](https://beta.openai.com/docs/api-reference/classifications).  
+Given a query and a set of labeled examples, the model will predict the most likely label for the query. Useful as a drop-in replacement for any ML classification or text-to-label task. [View on OpenAI](https://platform.openai.com/docs/api-reference/classifications).  
 
 ```csharp
 var api = new OpenAIAPI(apiKeys: "YOUR_API_KEY_HERE", engine: Engine.Davinci);
@@ -109,7 +125,7 @@ Console.WriteLine(result.Label);
 ```
 
 ### Answers
-Given a question, a set of documents, and some examples, the API generates an answer to the question based on the information in the set of documents. This is useful for question-answering applications on sources of truth, like company documentation or a knowledge base. [View on OpenAI](https://beta.openai.com/docs/api-reference/answers).  
+Given a question, a set of documents, and some examples, the API generates an answer to the question based on the information in the set of documents. This is useful for question-answering applications on sources of truth, like company documentation or a knowledge base. [View on OpenAI](https://platform.openai.com/docs/api-reference/answers).  
 
 ```csharp
 var api = new OpenAIAPI(apiKeys: "YOUR_API_KEY_HERE", engine: Engine.Davinci);
@@ -205,7 +221,8 @@ Each of those methods has similar convenience overloads to specify the request i
 
 ## Documentation
 
-View the documentation on [OpenAI](https://beta.openai.com/docs/introduction/overview). Feel free to add me on Discord Reverse#0069 if you have any questions. Better documentation may come later.
+View the documentation on [OpenAI](https://platform.openai.com/docs/introduction/overview). Feel free to add me on Discord Reverse#0069 if you have any questions. Better documentation may come later.
 
 ## Credits
-OkGoDoIt - Original [fork](https://github.com/OkGoDoIt/OpenAI-API-dotnet/tree/e07bfe2ddeea40380beb923f36fca9853830d7d7) from December 22, 2020.
+- OkGoDoIt - Original [fork](https://github.com/OkGoDoIt/OpenAI-API-dotnet/tree/e07bfe2ddeea40380beb923f36fca9853830d7d7) from December 22, 2020.
+- WilliamWelsh [fork](https://github.com/WilliamWelsh/OpenAI.Net)
